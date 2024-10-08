@@ -2,12 +2,17 @@
 
 ## 描述
 
+![界面1](./dicom-interface.png)
+
+![界面2](./dicom-simulator.png)
+
 dicon-simulator 的桌面模拟器版本
 
 1.支持拉取工作列表
 2.支持MPPS
 3.支持C-STORE
 4.可配置
+5.支持多语言，多主题
 
 TODO:
 1.自定义脚本内容
