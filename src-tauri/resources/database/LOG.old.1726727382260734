@@ -1,0 +1,1 @@
+2024/09/11-17:24:08.202268 1b88 [WARN] [ssing is false):2075] DB::Open() failed: IO error: Failed to create lock file: E:\just_rust\givemestar\riusky\OceanKite\OceanKiteDeskTopApp\src-tauri\target\debug\resources\database/LOCK: 另一个程序正在使用此文件，进程无法访问。

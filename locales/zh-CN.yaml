@@ -1,0 +1,36 @@
+buttons:
+  theme: 主题
+dicom:
+  dicom: 医疗影像图片
+  worklist: 工作列表
+  mpps: CT扫描全流程
+  ups: UPS
+  workliststatus: 查看患者列表
+  mpps_mark: 已实现MWL,MPPS,C-STORE
+sidebar:
+  home: 主页
+  dicom: 影像图片
+  hl7: HL7 消息
+  setting: 工作列表设置
+  mimsetting: 存储中心设置
+  hl7setting: HL7 设置
+  hl7messagesetting: HL7 消息设置
+from:
+  search: 搜索
+  add: 添加
+  showfields: 显示字段
+  Update: 更新
+  Delete: 删除
+  Actions: 操作
+  AddHL7Message: 添加HL7消息模板
+  hl7name: 设置命名
+  hl7message: 模板内容
+  name: Name
+  Submit: 提交
+  Close: 关闭
+  Display: 展示字段
+  Apply: 确认
+  results: 没找到任何结果
+language:
+  en: English
+  zn: 中文

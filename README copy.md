@@ -1,4 +1,4 @@
-# DICOM-SIMULATOR-DESKTOP-APP
+# DICOM-SIMULATOR
 
 ## 描述
 
@@ -10,14 +10,16 @@ dicon-simulator 的桌面模拟器版本
 4.可配置
 
 TODO:
-1.自定义脚本内容
-2.UPS
+自定义脚本内容
 
+## 配置资源文件
+
+> 在发行版下载资源文件，并解压到对应的位置
+> Python312.zip 解压缩到安装目录, python 环境是安装之后解压到对应的位置
 
 ## 初始化项目
 
 > NOTE: 本项目依赖rust开发环境，需要先安装rust环境
-> NOTE: 本项目依赖python开发环境，需要先安装python环境，或者下载python312，解压到项目目录
 
 ```shell
 # 安装前端依赖

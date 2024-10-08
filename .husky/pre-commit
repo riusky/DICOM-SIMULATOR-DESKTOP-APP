@@ -1,0 +1,5 @@
+. "$(dirname "$0")/_/husky.sh"
+
+
+# Perform lint check on files in the staging area through .lintstagedrc configuration
+pnpm exec lint-staged

@@ -1,0 +1,38 @@
+buttons:
+  theme: Theme
+dicom:
+  dicom: DICOM
+  worklist: WORKLIST
+  mpps: FULL CT SCAN
+  ups: UPS
+  workliststatus: View Patient List
+  mpps_mark: MWL, MPPS, C-STORE Implemented
+sidebar:
+  home: Home
+  dicom: DICOM
+  hl7: hl7
+  setting: WORKLIST SETTING
+  mimsetting: PACS SETTING
+  hl7setting: HL7 SETTING
+  hl7messagesetting: HL7 MESSAGE SETTING
+from:
+  search: Search
+  add: Add
+  showfields: Select Fields
+  Update: Update
+  Delete: Delete
+  Actions: Actions
+  AddNewSetting: Add New Setting
+  AddHL7Message: Add HL7 Message Template
+  AddHL7AddressMessage: Add New HL7 IP AND PORT Setting
+  hl7name: Template Name
+  name: Name
+  hl7message: Template Content
+  Submit: Submit
+  Close: Close
+  Display: Select Fields to Display
+  Apply: Apply
+  results: No results found
+language:
+  en: English
+  zh: 中文
