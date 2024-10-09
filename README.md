@@ -21,6 +21,12 @@ TODO:
 1.自定义脚本内容
 2.UPS
 
+## 使用
+
+FULL CT SCAN: 包含了拉取工作列表，发送MPPS，发送C-STORE等功能。
+WORKLIST: 仅支持查看工作列表。
+C-STORE: 支持无头发送C-STORE功能。
+
 
 ## 初始化项目
 
