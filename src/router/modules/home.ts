@@ -86,5 +86,13 @@ export default {
         title: $t("dicom.worklist"),
       },
     },
+    // {
+    //   path: "/dicomviewer/index",
+    //   name: "dicomviewer",
+    //   component: () => import("@/views/dicomviewer/index.vue"),
+    //   meta: {
+    //     title: $t("dicom.worklist"),
+    //   },
+    // },
   ],
 } satisfies RouteConfigsTable;

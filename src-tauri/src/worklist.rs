@@ -12,6 +12,7 @@ use crate::models::PatientEntry;
 use crate::paths::AppPath;
 use pyo3::prelude::*;
 use pyo3::types::PyModule;
+use pyo3::types::{IntoPyDict, PyBool, PyNone};
 use std::fs;
 use std::result;
 use tauri::{command, AppHandle, Manager, State};
@@ -288,6 +289,11 @@ pub async fn search_worklist_data(
             .into_owned(),
     };
 
+    let certs_path = AppPath::Certs
+    .resolve(&handle)?
+    .to_string_lossy()
+    .into_owned();
+
     // 解析 Python 脚本路径
     let script_path = AppPath::PythonScript.resolve(&handle)?;
 
@@ -303,6 +309,10 @@ pub async fn search_worklist_data(
         let get_work_list = module
             .getattr("get_work_list_with_paths")
             .and_then(|f| {
+              let tls_enabled_py = match entry.tls_enabled {
+                Some(value) => value,
+                None => false,
+            };
                 f.call1((
                     &params.calling_ae_title,
                     &params.ae_title,
@@ -310,6 +320,8 @@ pub async fn search_worklist_data(
                     params.ae_port,
                     &params.c_find_rq_path,
                     &params.mr_modality_path,
+                    tls_enabled_py,
+                    certs_path,
                 ))
             })
             .map_err(|e| format!("Failed to call Python function: {}", e))?;
@@ -476,10 +488,15 @@ pub async fn create_mpps_entry(
             PyModule::from_code_bound(py, &script_content, "dicom_utils.py", "dicom_utils")
                 .map_err(|e| format!("Failed to load Python module: {}", e))?;
 
+        let certs_path = AppPath::Certs
+        .resolve(&handle)?
+        .to_string_lossy()
+        .into_owned();
+
         let send_mpps_in_progress = module
             .getattr("send_mpps_in_progress")
             .and_then(|f: Bound<'_, PyAny>| {
-                f.call1((worklist_json, mpps_json, inprogress_path_str, false))
+                f.call1((worklist_json, mpps_json, inprogress_path_str, false, certs_path))
             })
             .map_err(|e| format!("Failed to call Python function: {}", e))?;
 
@@ -589,6 +606,11 @@ pub async fn update_mpps_entry(
             PyModule::from_code_bound(py, &script_content, "dicom_utils.py", "dicom_utils")
                 .map_err(|e| format!("Failed to load Python module: {}", e))?;
 
+
+        let certs_path = AppPath::Certs
+        .resolve(&handle)?
+        .to_string_lossy()
+        .into_owned();
         let send_mpps_completed = module
             .getattr("send_mpps_completed")
             .and_then(|f: Bound<'_, PyAny>| {
@@ -598,6 +620,7 @@ pub async fn update_mpps_entry(
                     &dcm_file,
                     completed_path_str,
                     false,
+                    certs_path,
                 ))
             })
             .map_err(|e| format!("Failed to call Python function: {}", e))?;
@@ -759,10 +782,13 @@ pub async fn send_to_pacs(
         let module =
             PyModule::from_code_bound(py, &script_content, "dicom_utils.py", "dicom_utils")
                 .map_err(|e| format!("Failed to load Python module: {}", e))?;
-
+        let certs_path = AppPath::Certs
+        .resolve(&handle)?
+        .to_string_lossy()
+        .into_owned();
         let get_work_list = module
             .getattr("send_c_store_requests")
-            .and_then(|f| f.call1((mpps_entry_json, mim_entry_json)))
+            .and_then(|f| f.call1((mpps_entry_json, mim_entry_json, certs_path)))
             .map_err(|e| format!("Failed to call Python function: {}", e))?;
 
         let work_list_result = get_work_list
@@ -1121,6 +1147,7 @@ pub async fn send_cstore_headless(
     selected_id: String,
     id: String,
     description: Option<String>,
+    generate: Option<bool>,
     handle: AppHandle,
 ) -> Result<ApiResponse<PatientEntry>, String> {
     let db = db_state.db.lock().await;
@@ -1141,6 +1168,7 @@ pub async fn send_cstore_headless(
     let mut mpps_entry =
         mpps_entry.ok_or_else(|| format!("No worklist entry found with id: {}", id))?;
     mpps_entry.description = description;
+    mpps_entry.generate = generate;
 
     let mim_entry_json = serde_json::to_string(&mim_entry).unwrap();
     let mpps_json = serde_json::to_string(&mpps_entry).unwrap();

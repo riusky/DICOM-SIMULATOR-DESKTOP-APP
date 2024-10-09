@@ -15,6 +15,14 @@
         class="textarea textarea-bordered w-full"
         placeholder="Enter new series description if you want to override it, or leave empty to use original series description in dicom files "
       />
+      <div class="flex items-center mt-4">
+        <span class="mr-2">Generate SeriesInstanceUID</span>
+        <input
+          v-model="generateUID"
+          type="checkbox"
+          class="toggle toggle-primary"
+        />
+      </div>
       <div class="modal-action">
         <button class="btn" @click="submitDescription">Submit</button>
         <button class="btn btn-secondary" @click="closeDescriptionModal">
@@ -246,6 +254,7 @@ const showDescriptionModal = ref(false); // 控制描述弹窗的显示
 const descriptionText = ref(""); // 存储输入的描述文本
 const descriptionId = ref(""); // 存储输入的描述文本
 const descriptionOption = ref(""); // 存储输入的描述文本
+const generateUID = ref(false);
 
 // 打开描述弹窗
 const openDescriptionModal = (item: PatientEntry, option: string) => {
@@ -274,12 +283,20 @@ const selectPACS = async (id: { tb: string; id: { String: string } }) => {
   console.log("Selected PACS:", id);
   togglePACSModal(); // 关闭模态框
   loading.value = true;
+  console.log({
+    dcmFile: currentDir.value,
+    id: currentId.value,
+    selectedId: id.id.String,
+    description: descriptionText.value,
+    generate: generateUID.value,
+  });
   try {
     await invoke("send_cstore_headless", {
       dcmFile: currentDir.value,
       id: currentId.value,
       selectedId: id.id.String,
       description: descriptionText.value,
+      generate: generateUID.value,
     });
   } catch (error) {
     console.log(error);

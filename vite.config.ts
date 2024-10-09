@@ -9,6 +9,7 @@ import {
 } from "./build/utils";
 const host = process.env.TAURI_DEV_HOST;
 import VueI18nPlugin from "@intlify/unplugin-vue-i18n/vite";
+import wasm from "vite-plugin-wasm";
 
 // https://vitejs.dev/config/
 export default ({ mode }: ConfigEnv): UserConfigExport => {
@@ -16,6 +17,7 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
   return {
     plugins: [
       vue(),
+      wasm(),
       VueI18nPlugin({
         jitCompilation: false,
         include: [pathResolve("../locales/**")],

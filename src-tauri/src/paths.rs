@@ -10,6 +10,7 @@ pub enum AppPath {
     CFindRq,
     MrModality,
     PythonScript,
+    Certs,
     InProgress,
     DisContinued,
     Completed,
@@ -28,6 +29,7 @@ impl AppPath {
             AppPath::DisContinued => resolve_path(handle, "resources/dcm/message/mpps-discontinued.dcm"),
             AppPath::Completed => resolve_path(handle, "resources/dcm/message/mpps-completed.dcm"),
             AppPath::PythonScript => resolve_path(handle, "resources/python-script/dicom_utils.py"),
+            AppPath::Certs => resolve_path(handle, "resources/certs"),
         }
         .map_err(|e| format!("Failed to resolve path: {}", e))
     }

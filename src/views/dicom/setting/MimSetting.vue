@@ -68,6 +68,14 @@
               required
             />
           </div>
+          <div class="form-control flex flex-row mb-1 items-center">
+            <label class="label w-1/3"> TLS Enabled </label>
+            <input
+              v-model="newEntry.tlsEnabled"
+              type="checkbox"
+              class="checkbox"
+            />
+          </div>
 
           <!-- Modal Actions -->
           <div class="modal-action">
@@ -138,7 +146,13 @@
         >
           <td>{{ index + 1 }}</td>
           <td v-for="field in selectedFields" :key="field">
-            {{ item[field] }}
+            <!-- Conditional rendering for TLS Enabled to show YES/NO -->
+            <template v-if="field === 'tlsEnabled'">
+              {{ item[field] ? "YES" : "NO" }}
+            </template>
+            <template v-else>
+              {{ item[field] }}
+            </template>
           </td>
           <td>
             <button class="btn btn-sm btn-warning" @click="handleUpdate(item)">
@@ -180,6 +194,7 @@ interface MimEntry {
   ae_title: string;
   ip: string;
   port: string;
+  tlsEnabled: boolean;
 }
 
 const data = ref<MimEntry[]>([]);
@@ -193,6 +208,7 @@ const newEntry = ref<MimEntry>({
   ae_title: "",
   ip: "",
   port: "",
+  tlsEnabled: false,
 });
 
 // 临时存储选中字段
@@ -205,6 +221,7 @@ const allFields = {
   ae_title: "AE Title",
   ip: "IP",
   port: "Port",
+  tlsEnabled: "TLS Enabled",
 };
 
 // 处理字段选择
@@ -251,6 +268,7 @@ const handleAdd = async () => {
           ae_title: newEntry.value.ae_title,
           ip: newEntry.value.ip,
           port: newEntry.value.port,
+          tlsEnabled: newEntry.value.tlsEnabled,
         },
       });
       if (result.success) {
@@ -315,6 +333,7 @@ const clearForm = () => {
     ae_title: "",
     ip: "",
     port: "",
+    tlsEnabled: false,
   };
 };
 

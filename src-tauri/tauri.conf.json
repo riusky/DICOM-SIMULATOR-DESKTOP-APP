@@ -31,7 +31,8 @@
       "resources/python-script":"resources/python-script",
       "resources/database":"resources/database",
       "resources/dcm":"resources/dcm",
-      "resources/dicom":"resources/dicom"
+      "resources/dicom":"resources/dicom",
+      "resources/certs":"resources/certs"
     },
     "icon": [
       "icons/32x32.png",

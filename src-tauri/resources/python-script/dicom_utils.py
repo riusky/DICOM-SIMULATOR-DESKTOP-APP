@@ -15,6 +15,8 @@ from pynetdicom.sop_class import uid_to_sop_class
 from dataclasses import dataclass, asdict
 from typing import List, Optional, Dict
 from dataclasses import dataclass, fields
+import ssl
+from pathlib import Path
 
 # 定义SopInstanceInfo类
 @dataclass
@@ -49,6 +51,7 @@ class MppsEntry:
     SopInstanceUids: Optional[List[SopInstanceUIDs]] = None  # 可选字段
     DcmFile: Optional[str] = None  # 可选字段
     description: Optional[str] = None
+    
 
     # 自定义的序列化方法
     def to_json(self):
@@ -107,6 +110,7 @@ class WorklistEntry:
     mpps_calling_ae_title: str
     mpps_ae_title: str
     mpps_port: str
+    tlsEnabled: bool = False
     
 @dataclass
 class MimEntry:
@@ -115,6 +119,7 @@ class MimEntry:
     ae_title: str
     ip: str
     port: str
+    tlsEnabled: bool = False
 
 def json_to_dataclass(json_str: str, cls):
     data = json.loads(json_str)
@@ -123,13 +128,39 @@ def json_to_dataclass(json_str: str, cls):
     return cls(**filtered_data)
 
 # Utility function to establish association
-def establish_association(calling_ae_title, ae_title, ae_address, ae_port, context, debug=False):
+def establish_association(calling_ae_title, ae_title, ae_address, ae_port, context, debug=False, tls_enabled_py=False, certs_path=None):
     if debug:
         debug_logger()
-    
+    certs_path = Path(certs_path)
+    # 使用 Path 对象拼接路径
+    cafile = certs_path / 'ca.pem'
+    certfile = certs_path / 'tls.pem'
+    keyfile = certs_path / 'tls.key'
+    print('======================')
+    print('======================')
+    print('======================')
+    print(tls_enabled_py)
+    print(certs_path)
+    print(cafile)
+    print(certfile)
+    print(keyfile)
+    print('======================')
+    print('======================')
+    # Create the SSLContext, your requirements may vary
+    # ssl_cx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH, cafile='server.crt')
+    # ssl_cx.verify_mode = ssl.CERT_REQUIRED
+    # ssl_cx.load_cert_chain(certfile='client.crt', keyfile='client.key')
     ae = AE(calling_ae_title)
     ae.add_requested_context(context)
-    assoc = ae.associate(ae_address, ae_port, ae_title=ae_title)
+    if tls_enabled_py:
+        ssl_cx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH, cafile=cafile)
+        ssl_cx.check_hostname = False
+        ssl_cx.verify_mode = ssl.CERT_NONE
+        ssl_cx.verify_mode = ssl.CERT_REQUIRED
+        ssl_cx.load_cert_chain(certfile=certfile, keyfile=keyfile)
+        assoc = ae.associate(ae_address, ae_port, ae_title=ae_title, tls_args=(ssl_cx, None))
+    else:
+        assoc = ae.associate(ae_address, ae_port, ae_title=ae_title)
     
     if not assoc.is_established:
         print('Association rejected, aborted or never connected')
@@ -153,11 +184,11 @@ def send_c_find(assoc, ds):
     return result
 
 # Function to get work list
-def get_work_list_with_paths(calling_ae_title, ae_title, ae_address, ae_port, c_find_rq_path, mr_modality_path, debug=False):
+def get_work_list_with_paths(calling_ae_title, ae_title, ae_address, ae_port, c_find_rq_path, mr_modality_path, tls_enabled_py, certs_path, debug=False):
     debug_logger()
     ds1 = dcmread(c_find_rq_path)
     ds2 = dcmread(mr_modality_path)
-    assoc = establish_association(calling_ae_title, ae_title, ae_address, ae_port, ModalityWorklistInformationFind, debug)
+    assoc = establish_association(calling_ae_title, ae_title, ae_address, ae_port, ModalityWorklistInformationFind, debug, tls_enabled_py, certs_path)
     if assoc is None:
         return []
     result2 = send_c_find(assoc, ds1)
@@ -242,18 +273,23 @@ def build_attr_list_discontinued(data, PerformedProcedureStepStatus):
     return ds
 
 # Function to send N-CREATE request
-def send_mpps_in_progress(worklist_json, mpps_json, path, debug=False):
+def send_mpps_in_progress(worklist_json, mpps_json, path, debug=False, certs_path=None):
     debug_logger()
+    print(worklist_json)
     try:
         mpps_entry = json_to_dataclass(mpps_json, MppsEntry)
+
         worklist_entry = json_to_dataclass(worklist_json, WorklistEntry)
+        print(worklist_entry)
         assoc = establish_association(
             worklist_entry.mpps_calling_ae_title,
             worklist_entry.mpps_ae_title,
             worklist_entry.worklist_ip,
             int(worklist_entry.mpps_port),
             ModalityPerformedProcedureStep,
-            debug
+            debug,
+            worklist_entry.tlsEnabled,
+            certs_path
         )
         if assoc is None:
             return json.dumps({"success": False, "message": "Failed to establish association"})
@@ -316,7 +352,7 @@ def send_mpps_discontinued(calling_ae_title, ae_title, ae_address, ae_port, data
 
 import json
 
-def send_mpps_completed(worklist_json, mpps_json, dcmFile, path, debug=False):
+def send_mpps_completed(worklist_json, mpps_json, dcmFile, path, debug=False, certs_path=None):
     debug_logger()
     try:
         mpps_entry = MppsEntry.from_json(mpps_json)
@@ -327,7 +363,7 @@ def send_mpps_completed(worklist_json, mpps_json, dcmFile, path, debug=False):
 
         if mpps_entry.SopInstanceUids:
             ds = build_mod_list(mpps_entry, path)
-            status = send_n_set(mpps_entry, worklist_entry, ds)
+            status = send_n_set(mpps_entry, worklist_entry, ds, certs_path)
             if status and status.Status == 0x0000:
                 return json.dumps({
                     "success": True,
@@ -354,7 +390,7 @@ def send_mpps_completed(worklist_json, mpps_json, dcmFile, path, debug=False):
         })
 
 # Function to send N-SET request
-def send_n_set(mpps_entry: MppsEntry, worklist_entry: WorklistEntry, ds):
+def send_n_set(mpps_entry: MppsEntry, worklist_entry: WorklistEntry, ds, certs_path=None):
     try:
         assoc = establish_association(
             worklist_entry.mpps_calling_ae_title,
@@ -362,7 +398,9 @@ def send_n_set(mpps_entry: MppsEntry, worklist_entry: WorklistEntry, ds):
             worklist_entry.worklist_ip,
             int(worklist_entry.mpps_port),
             ModalityPerformedProcedureStep,
-            False
+            False,
+            worklist_entry.tlsEnabled,
+            certs_path
         )
 
         if assoc is None:
@@ -474,7 +512,7 @@ def collect_dcm_files(path: str) -> List[SopInstanceUIDs]:
 
 
 # Function to send C-STORE requests
-def send_c_store_requests(mpps_entry, mim_entry):
+def send_c_store_requests(mpps_entry, mim_entry,certs_path=''):
     debug_logger()
     print(mpps_entry)
     try:
@@ -514,7 +552,20 @@ def send_c_store_requests(mpps_entry, mim_entry):
             tem_ds = dcmread(sop_instance_uid_data.sop_instance_infos[0].path)
             context = build_context(sop_class, tem_ds.file_meta.TransferSyntaxUID)
             # Associate with the peer AE
-            assoc = ae.associate(ip, port, contexts=[context], ae_title=pacs_ae_title)
+            if mim_entry.tlsEnabled:
+                certs_path = Path(certs_path)
+                # 使用 Path 对象拼接路径
+                cafile = certs_path / 'ca.pem'
+                certfile = certs_path / 'tls.pem'
+                keyfile = certs_path / 'tls.key'
+                ssl_cx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH, cafile=cafile)
+                ssl_cx.check_hostname = False
+                ssl_cx.verify_mode = ssl.CERT_NONE
+                ssl_cx.verify_mode = ssl.CERT_REQUIRED
+                ssl_cx.load_cert_chain(certfile=certfile, keyfile=keyfile)
+                assoc = ae.associate(ip, port, contexts=[context], ae_title=pacs_ae_title, tls_args=(ssl_cx, None))
+            else:
+                assoc = ae.associate(ip, port, contexts=[context], ae_title=pacs_ae_title)
             
             if assoc.is_established:
                 for sop_instance_info in sop_instance_uid_data.sop_instance_infos:
@@ -759,9 +810,11 @@ def send_cstore_headless(mim_entry, mpps_entry, dcmFile, debug=False):
             "PatientSex": mpps_entry.get("patient_sex"),
             "StudyInstanceUID": generate_uid(),
             "Description": mpps_entry.get("description"),
+            "Generate": mpps_entry.get("generate"),
         }
 
         def process_directory(directory, series_instance_uid):
+            result = None
             for root, dirs, files in os.walk(directory):
                 dcm_files = [os.path.join(root, f) for f in files if f.endswith('.dcm')]
                 # series_instance_uid = generate_uid()
@@ -770,17 +823,23 @@ def send_cstore_headless(mim_entry, mpps_entry, dcmFile, debug=False):
                     result = process_dicom_file(ae, dcm_file, patient_data, ip, port, pacs_ae_title, series_instance_uid)
                     if not result["success"]:
                         return result
-        series_instance_uid = generate_uid()
+            return result
+        if patient_data['Generate']:
+            series_instance_uid = generate_uid()
+        else:
+            series_instance_uid = None
         # 判断 dcmFile 是文件还是目录
         if os.path.isdir(dcmFile):
             for current_dir, _, _ in os.walk(dcmFile):
                 result = process_directory(current_dir,series_instance_uid)
                 if result and not result["success"]:
                     return json.dumps(result)
+                series_instance_uid = result['result']
         else:
             # 如果是单个文件，执行处理
             
             result = process_dicom_file(ae, dcmFile, patient_data, ip, port, pacs_ae_title, mpps_entry.get("sop_instance_uids"))
+            series_instance_uid = result['result']
             if not result["success"]:
                 return json.dumps(result)
 
@@ -813,8 +872,14 @@ def process_dicom_file(ae, dcm_file, patient_data, ip, port, pacs_ae_title, seri
         ds.PatientID = patient_data["PatientID"]
         ds.PatientBirthDate = patient_data["PatientBirthDate"]
         ds.PatientSex = patient_data["PatientSex"]
-        ds.StudyInstanceUID = patient_data["StudyInstanceUID"]
-        ds.SeriesInstanceUID = series_instance_uid
+        if patient_data['Generate']:
+            ds.StudyInstanceUID = patient_data["StudyInstanceUID"]
+            # ds.SeriesInstanceUID = series_instance_uid
+            ds.SeriesInstanceUID = generate_uid()
+            if 'ReferencedFrameOfReferenceSequence' in ds:
+                ds.ReferencedFrameOfReferenceSequence[0].RTReferencedStudySequence[0].RTReferencedSeriesSequence[0].SeriesInstanceUID = series_instance_uid
+        else:
+            series_instance_uid = ds.SeriesInstanceUID
         if patient_data.get("Description"):
             ds.SeriesDescription = patient_data.get('Description')
         

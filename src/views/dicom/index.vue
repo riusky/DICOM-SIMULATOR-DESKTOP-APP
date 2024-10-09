@@ -59,7 +59,7 @@ const items = [
   },
   {
     title: "DCM",
-    url: "dcm",
+    url: "/dicomviewer/index",
     status: "Under Development",
     iconClass: "bg-neutral-content text-neutral",
     iconComponent: CircleStackIcon,

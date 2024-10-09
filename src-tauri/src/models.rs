@@ -79,6 +79,8 @@ pub struct MimEntry {
     pub ae_title: String,  // AE 标题
     pub ip: String,        // IP 地址
     pub port: String,      // 端口号
+    #[serde(rename = "tlsEnabled")]
+    pub tls_enabled: Option<bool>,      // 端口号
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -113,6 +115,8 @@ pub struct WorklistEntry {
     pub mpps_calling_ae_title: String,
     pub mpps_ae_title: String,
     pub mpps_port: String,
+    #[serde(rename = "tlsEnabled")]
+    pub tls_enabled: Option<bool>,  
 }
 
 
@@ -170,5 +174,6 @@ pub struct PatientEntry {
     pub patient_birth_date: String, // 出生日期
     pub patient_sex: String,        // 性别
     pub description: Option<String>, // Optional to allow empty status initially
+    pub generate: Option<bool>, // Optional to allow empty status initially
     pub sop_instance_uids: Option<String>, // Optional to allow empty status initially
 }

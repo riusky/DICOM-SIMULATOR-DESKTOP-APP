@@ -95,6 +95,14 @@
               required
             />
           </div>
+          <div class="form-control flex flex-row mb-1 items-center">
+            <label class="label w-1/3"> TLS Enabled </label>
+            <input
+              v-model="newEntry.tlsEnabled"
+              type="checkbox"
+              class="checkbox"
+            />
+          </div>
 
           <!-- Modal Actions -->
           <div class="modal-action">
@@ -165,7 +173,12 @@
         >
           <td>{{ index + 1 }}</td>
           <td v-for="field in selectedFields" :key="field">
-            {{ item[field] }}
+            <template v-if="field === 'tlsEnabled'">
+              {{ item[field] ? "YES" : "NO" }}
+            </template>
+            <template v-else>
+              {{ item[field] }}
+            </template>
           </td>
           <td>
             <button class="btn btn-sm btn-warning" @click="handleUpdate(item)">
@@ -194,6 +207,7 @@ import { ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { useTranslationLang } from "@/layout/hooks/useTranslationLang";
 const { t } = useTranslationLang();
+
 interface WorklistEntry {
   id?: {
     tb: string;
@@ -209,6 +223,7 @@ interface WorklistEntry {
   mpps_calling_ae_title: string;
   mpps_ae_title: string;
   mpps_port: string;
+  tlsEnabled: boolean; // Add tlsEnabled field
 }
 
 const data = ref<WorklistEntry[]>([]);
@@ -225,6 +240,7 @@ const newEntry = ref<WorklistEntry>({
   mpps_calling_ae_title: "",
   mpps_ae_title: "",
   mpps_port: "",
+  tlsEnabled: false, // Initialize tlsEnabled to false
 });
 
 // 临时存储选中字段
@@ -240,6 +256,7 @@ const allFields = {
   mpps_calling_ae_title: "MPPS Calling AE Title",
   mpps_ae_title: "MPPS AE Title",
   mpps_port: "MPPS Port",
+  tlsEnabled: "TLS Enabled", // Add TLS enabled display
 };
 
 // 处理字段选择
@@ -292,6 +309,7 @@ const handleAdd = async () => {
             mpps_calling_ae_title: newEntry.value.mpps_calling_ae_title,
             mpps_ae_title: newEntry.value.mpps_ae_title,
             mpps_port: newEntry.value.mpps_port,
+            tlsEnabled: newEntry.value.tlsEnabled, // Include tlsEnabled
           },
         },
       );
@@ -363,8 +381,10 @@ const clearForm = () => {
     mpps_calling_ae_title: "",
     mpps_ae_title: "",
     mpps_port: "",
+    tlsEnabled: false, // Default to false
   };
 };
+
 // 页面加载时默认选择字段
 selectedFields.value = Object.keys(allFields).filter(
   (field) => !["id"].includes(field),
