@@ -13,62 +13,49 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: 'macos-latest' # for Arm based macs (M1 and above).
+          - platform: 'macos-latest'
             args: '--target aarch64-apple-darwin'
-          - platform: 'macos-latest' # for Intel based macs.
+            python_version: '3.12'
+          - platform: 'macos-latest'
             args: '--target x86_64-apple-darwin'
-          - platform: 'ubuntu-22.04' # for Tauri v1 you could replace this with ubuntu-20.04.
+            python_version: '3.12'
+          - platform: 'ubuntu-22.04'
             args: ''
+            python_version: '3.12'
           - platform: 'windows-latest'
             args: ''
+            python_version: '3.12'
 
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
 
+      # 设置 Node.js 环境
       - name: setup node
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
 
+      # 安装 Rust 稳定版
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
-      # 安装 Homebrew 并使用 brew 安装 pyenv (macOS 平台)
-      - name: Install Homebrew and pyenv on macOS
-        if: matrix.platform == 'macos-latest'
-        run: |
-          # 安装 Homebrew，如果不存在
-          if ! command -v brew &> /dev/null; then
-            echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> $HOME/.bash_profile
-            eval "$(/opt/homebrew/bin/brew shellenv)"
-          else
-            echo "Homebrew is already installed."
-            eval "$(/opt/homebrew/bin/brew shellenv)"
-          fi
-          brew update
-          brew install pyenv
-          brew install pyenv-virtualenv
-          pyenv install 3.12.0
-          pyenv global 3.12.0
-
-
-      # 安装 Python 环境，针对 Windows 的设置
-      - name: Setup Python (Windows)
-        if: matrix.platform == 'windows-latest'
+      # 设置 Python 环境
+      - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.12'
+          python-version: ${{ matrix.python_version }} # 使用在矩阵中定义的 Python 版本
 
-      # 安装 Python 开发环境和依赖 (Ubuntu 平台)
+      # 安装 Ubuntu 上的依赖项（仅限 Ubuntu 平台）
       - name: install dependencies (ubuntu only)
         if: matrix.platform == 'ubuntu-22.04'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf python3-dev
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
+      # 安装 pnpm
       - name: Install pnpm
         run: npm install -g pnpm
 
@@ -78,14 +65,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y llvm
-
       - name: Install LLVM on macOS
         if: matrix.platform == 'macos-latest'
         run: |
           brew install llvm
-          echo 'export PATH="/usr/local/opt/llvm/bin:$PATH"' >> $GITHUB_ENV
+          echo 'export PATH="/usr/local/opt/llvm/bin:$PATH"' >> ~/.bash_profile
           source ~/.bash_profile
-
       - name: Install LLVM on Windows
         if: matrix.platform == 'windows-latest'
         run: |
@@ -93,13 +78,14 @@ jobs:
 
       # 安装前端依赖
       - name: install frontend dependencies
-        run: pnpm install # change this to npm, pnpm or bun depending on which one you use.
+        run: pnpm install
 
+      # 使用 tauri 构建
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: app-v__VERSION__ # the action automatically replaces __VERSION__ with the app version.
+          tagName: app-v__VERSION__
           releaseName: 'App v__VERSION__'
           releaseBody: 'See the assets to download this version and install.'
           releaseDraft: true
