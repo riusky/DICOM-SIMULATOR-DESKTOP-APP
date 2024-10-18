@@ -30,7 +30,6 @@ futures = "0.3.30"
 rust-hl7 = "0.5.0"
 chrono = "0.4.35"
 reqwest = "0.11.26"
-winreg = "0.52.0"
 tauri-plugin-fs = "2.0.0-rc"
 
 [tauri]
@@ -41,3 +40,10 @@ fs = true # 允许文件系统访问
 # 允许访问的路径，`$RESOURCE` 表示资源目录
 read = ["$RESOURCE/*"]
 write = ["$RESOURCE/database/*"]
+
+
+[target.x86_64-apple-darwin]
+rustflags = [
+  "-C", "link-arg=-undefined",
+  "-C", "link-arg=dynamic_lookup",
+]

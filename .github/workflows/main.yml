@@ -48,7 +48,11 @@ jobs:
         # You can remove the one that doesn't apply to your app to speed up the workflow a bit.
       - name: Install pnpm
         run: npm install -g pnpm
-
+      # 安装 Python 环境
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'  # 你可以指定具体的 Python 版本，例如 '3.9'
       - name: install frontend dependencies
         run: pnpm install # change this to npm, pnpm or bun depending on which one you use.
 

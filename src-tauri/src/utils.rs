@@ -5,43 +5,6 @@ use std::io;
 use std::path::PathBuf;
 use tauri::path::BaseDirectory;
 use tauri::{AppHandle, Manager};
-use winreg::enums::*;
-use winreg::RegKey;
-
-/// 添加指定路径到当前用户的 Path 环境变量
-///
-/// # Arguments
-///
-/// * `new_path` - 要添加到 Path 的新路径
-///
-/// # Returns
-///
-/// * `Ok(())` - 成功添加路径
-/// * `Err(io::Error)` - 出现错误
-pub fn add_path_to_env(new_path: &str) -> io::Result<()> {
-    // 打开当前用户的环境变量注册表键
-    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-    let env = hkcu.open_subkey_with_flags("Environment", KEY_READ | KEY_WRITE)?;
-
-    // 获取当前的 Path 环境变量
-    let current_path: String = env.get_value("Path").unwrap_or_default();
-
-    // 输出当前的 Path 值，用于调试
-    println!("Current Path: {}", current_path);
-
-    // 检查新路径是否已经存在
-    if !current_path.contains(new_path) {
-        // 如果不存在，则将新路径添加到 Path 中
-        let new_path_value = format!("{};{}", current_path, new_path);
-        env.set_value("Path", &new_path_value)?;
-
-        println!("Successfully added to Path: {}", new_path);
-    } else {
-        println!("Path already contains: {}", new_path);
-    }
-
-    Ok(())
-}
 
 /// Resolves a path using Tauri's `BaseDirectory::Resource`.
 /// Returns a `PathBuf` to allow more flexibility with file paths.
