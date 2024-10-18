@@ -42,12 +42,21 @@ jobs:
         run: |
           brew update
           brew install pyenv
-          echo 'export PYENV_ROOT="$HOME/.pyenv"' >> $GITHUB_ENV
-          echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> $GITHUB_ENV
-          echo 'eval "$(pyenv init --path)"' >> $GITHUB_ENV
-          echo 'eval "$(pyenv init -)"' >> $GITHUB_ENV
+          brew install pyenv-virtualenv
           pyenv install 3.12.0  # 安装你需要的 Python 版本
           pyenv global 3.12.0
+        env:
+          PYENV_ROOT: $HOME/.pyenv
+          PATH: $PYENV_ROOT/bin:$PATH
+
+      # 手动配置 pyenv 环境变量
+      - name: Configure pyenv environment on macOS
+        if: matrix.platform == 'macos-latest'
+        run: |
+          echo "PYENV_ROOT=$HOME/.pyenv" >> $GITHUB_ENV
+          echo "$HOME/.pyenv/shims:/usr/local/bin:$PATH" >> $GITHUB_ENV
+          echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> $GITHUB_ENV
+          echo 'export PATH="$PYENV_ROOT/shims:$PATH"' >> $GITHUB_ENV
 
       # 安装 Python 环境，针对 Windows 的设置
       - name: Setup Python (Windows)
