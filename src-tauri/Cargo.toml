@@ -19,7 +19,7 @@ tauri = { version = "2.0.0-rc", features = [] }
 tauri-plugin-shell = "2.0.0-rc"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-pyo3 = { version = "0.22.2", features = ["extension-module", "auto-initialize"] }
+pyo3 = { version = "0.22.2", features = ["auto-initialize"] }
 surrealdb = { version = "1.5.4", features = ["kv-rocksdb"] }
 tokio = { version = "1.40.0", features = ["macros", "rt-multi-thread"] }
 tauri-plugin-dialog = "2.0.0-rc"
@@ -32,6 +32,10 @@ chrono = "0.4.35"
 reqwest = "0.11.26"
 tauri-plugin-fs = "2.0.0-rc"
 
+[features]
+extension-module = ["pyo3/extension-module"]
+default = ["extension-module"]
+
 [tauri]
 # Tauri 的核心配置
 [tauri.allowlist]
@@ -40,10 +44,3 @@ fs = true # 允许文件系统访问
 # 允许访问的路径，`$RESOURCE` 表示资源目录
 read = ["$RESOURCE/*"]
 write = ["$RESOURCE/database/*"]
-
-
-[target.x86_64-apple-darwin]
-rustflags = [
-  "-C", "link-arg=-undefined",
-  "-C", "link-arg=dynamic_lookup",
-]
