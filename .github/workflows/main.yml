@@ -36,10 +36,17 @@ jobs:
         with:
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
-      # 使用 brew 安装 pyenv，并配置 Python 版本 (macOS 平台)
-      - name: Install pyenv on macOS
+      # 安装 Homebrew 并使用 brew 安装 pyenv (macOS 平台)
+      - name: Install Homebrew and pyenv on macOS
         if: matrix.platform == 'macos-latest'
         run: |
+          # Install Homebrew if not present
+          if ! command -v brew &> /dev/null; then
+            echo "Installing Homebrew..."
+            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+            echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> $HOME/.bash_profile
+            eval "$(/opt/homebrew/bin/brew shellenv)"
+          fi
           brew update
           brew install pyenv
           brew install pyenv-virtualenv
