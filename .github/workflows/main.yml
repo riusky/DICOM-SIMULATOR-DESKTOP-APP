@@ -39,7 +39,6 @@ jobs:
       # 安装 Homebrew 并使用 brew 安装 pyenv (macOS 平台)
       - name: Install Homebrew and pyenv on macOS
         if: matrix.platform == 'macos-latest'
-        shell: /bin/bash
         run: |
           # Install Homebrew if not present
           if ! command -v brew &> /dev/null; then
