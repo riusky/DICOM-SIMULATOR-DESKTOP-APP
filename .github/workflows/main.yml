@@ -51,7 +51,7 @@ jobs:
           brew update
           brew install pyenv
           brew install pyenv-virtualenv
-          pyenv install 3.12.0  # 安装你需要的 Python 版本
+          pyenv install 3.12.0
           pyenv global 3.12.0
         env:
           PYENV_ROOT: $HOME/.pyenv
